@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ideaout.dategirls.dao.UserMapper" >
+  <resultMap id="BaseResultMap" type="com.ideaout.dategirls.domain.User" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="nickName" property="nickname" jdbcType="VARCHAR" />
+    <result column="iconUrl" property="iconurl" jdbcType="VARCHAR" />
+    <result column="city" property="city" jdbcType="VARCHAR" />
+    <result column="birthday" property="birthday" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="INTEGER" />
+    <result column="weixinId" property="weixinid" jdbcType="VARCHAR" />
+    <result column="accountState" property="accountstate" jdbcType="INTEGER" />
+    <result column="qqId" property="qqid" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <resultMap id="UserInfoResultMap" type="com.ideaout.dategirls.bean.UserInfoMapReslut" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="nickName" property="nickname" jdbcType="VARCHAR" />
+    <result column="iconUrl" property="iconurl" jdbcType="VARCHAR" />
+    <result column="city" property="city" jdbcType="VARCHAR" />
+    <result column="birthday" property="birthday" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="INTEGER" />
+    <result column="accountState" property="accountstate" jdbcType="INTEGER" />
+    <result column="isfollow" property="isFollow" jdbcType="INTEGER" />
+    <result column="follow_count" property="followCount" jdbcType="INTEGER" />
+    <result column="followed_by_other_count" property="followedByOtherCount" jdbcType="INTEGER" />
+
+  </resultMap>
+
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, phone, nickName, iconUrl, city, birthday, sex, weixinId, accountState, qqId, 
+    password
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.ideaout.dategirls.domain.UserExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from user
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+
+  <!-- SELECT id,phone,nickName,iconUrl,city,birthday,sex,accountstate,
+	(SELECT count(*) FROM follow where follow_userid='1') as follow_count,
+	(SELECT count(*) FROM follow where followed_userid='1') as followed_by_other_count
+	from user where id='1';-->
+  <select id="selectByPrimaryKey" resultMap="UserInfoResultMap" parameterType="java.lang.Long" >
+    SELECT id,phone,nickName,iconUrl,city,birthday,sex,accountstate,
+    (SELECT count(*) FROM follow where follow_userid=#{id,jdbcType=BIGINT}) as follow_count,
+    (SELECT count(*) FROM follow where followed_userid=#{id,jdbcType=BIGINT}) as followed_by_other_count
+    from user where id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <!--SELECT id,phone,nickName,iconUrl,city,birthday,sex,
+	(SELECT COUNT(*) from follow where followed_userid= '2' and follow_userid='1') as isfollow,
+	(SELECT count(*) FROM follow where follow_userid='1') as follow_count,
+	(SELECT count(*) FROM follow where followed_userid='1') as followed_by_other_count
+	from user where id='1';-->
+  <select id="selectOtherByPrimaryKey" resultMap="UserInfoResultMap" parameterType="java.lang.Long" >
+    SELECT id,phone,nickName,iconUrl,city,birthday,sex,
+	(SELECT COUNT(*) from follow where followed_userid=#{otherId,jdbcType=BIGINT} and follow_userid=#{myId,jdbcType=BIGINT}) as isfollow,
+	(SELECT count(*) FROM follow where follow_userid=#{myId,jdbcType=BIGINT}) as follow_count,
+	(SELECT count(*) FROM follow where followed_userid=#{myId,jdbcType=BIGINT}) as followed_by_other_count
+	from user where id= #{otherId,jdbcType=BIGINT}
+  </select>
+
+  <!--<select id="selectFindLoveListByExample" resultMap="UserInfoResultMap" parameterType="com.ideaout.dategirls.domain.UserExample">
+    &lt;!&ndash;SELECT id,phone,nickName,iconUrl,city,birthday,sex
+    from user
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>&ndash;&gt;
+    select
+    <include refid="Base_Column_List" />
+    from user
+
+    &lt;!&ndash; <if test="orderByClause != null" >
+       order by ${orderByClause}
+     </if>&ndash;&gt;
+/*    where id not in (select followed_userid from follow where follow_userid=#{record.id,jdbcType=BIGINT})
+*/  </select>-->
+
+  <select id="selectFindLoveListByExample" resultMap="UserInfoResultMap" parameterType="com.ideaout.dategirls.http.requestParm.FindLoveParm">
+    select id,phone,nickName,iconUrl,city,birthday,sex
+    from user
+    where id not in (select followed_userid from follow where follow_userid=#{parm.userid,jdbcType=VARCHAR})
+    <if test="parm.sex != null" >
+      and sex=#{parm.sex,jdbcType=INTEGER}
+    </if>
+    <if test="parm.city != null" >
+      and city like '%${parm.city}%'
+    </if>
+    <if test="parm.pageIndex != null">
+      limit ${parm.pageIndex*(parm.pageSize-1)},${parm.pageSize};
+    </if>
+  </select>
+
+  <select id="selectFollowListById" resultMap="UserInfoResultMap" parameterType="com.ideaout.dategirls.http.requestParm.QueryMyFollowListParm" >
+	SELECT id,phone,nickName,iconUrl,city,birthday,sex
+	from user u,(SELECT followed_userid from follow where follow_userid = #{parm.userid,jdbcType=BIGINT}) f
+	where u.id = f.followed_userid
+    <if test="parm.pageIndex != null">
+      limit ${parm.pageIndex*(parm.pageSize-1)},${parm.pageSize};
+    </if>
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from user
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.ideaout.dategirls.domain.UserExample" >
+    delete from user
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.ideaout.dategirls.domain.User" >
+    insert into user (id, phone, nickName, 
+      iconUrl, city, birthday, 
+      sex, weixinId, accountState, 
+      qqId, password)
+    values (#{id,jdbcType=BIGINT}, #{phone,jdbcType=VARCHAR}, #{nickname,jdbcType=VARCHAR}, 
+      #{iconurl,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{birthday,jdbcType=VARCHAR}, 
+      #{sex,jdbcType=INTEGER}, #{weixinid,jdbcType=VARCHAR}, #{accountstate,jdbcType=INTEGER}, 
+      #{qqid,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.ideaout.dategirls.domain.User" >
+    insert into user
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="phone != null" >
+        phone,
+      </if>
+      <if test="nickname != null" >
+        nickName,
+      </if>
+      <if test="iconurl != null" >
+        iconUrl,
+      </if>
+      <if test="city != null" >
+        city,
+      </if>
+      <if test="birthday != null" >
+        birthday,
+      </if>
+      <if test="sex != null" >
+        sex,
+      </if>
+      <if test="weixinid != null" >
+        weixinId,
+      </if>
+      <if test="accountstate != null" >
+        accountState,
+      </if>
+      <if test="qqid != null" >
+        qqId,
+      </if>
+      <if test="password != null" >
+        password,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="phone != null" >
+        #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="nickname != null" >
+        #{nickname,jdbcType=VARCHAR},
+      </if>
+      <if test="iconurl != null" >
+        #{iconurl,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null" >
+        #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="birthday != null" >
+        #{birthday,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        #{sex,jdbcType=INTEGER},
+      </if>
+      <if test="weixinid != null" >
+        #{weixinid,jdbcType=VARCHAR},
+      </if>
+      <if test="accountstate != null" >
+        #{accountstate,jdbcType=INTEGER},
+      </if>
+      <if test="qqid != null" >
+        #{qqid,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        #{password,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.ideaout.dategirls.domain.UserExample" resultType="java.lang.Integer" >
+    select count(*) from user
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update user
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=BIGINT},
+      </if>
+      <if test="record.phone != null" >
+        phone = #{record.phone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.nickname != null" >
+        nickName = #{record.nickname,jdbcType=VARCHAR},
+      </if>
+      <if test="record.iconurl != null" >
+        iconUrl = #{record.iconurl,jdbcType=VARCHAR},
+      </if>
+      <if test="record.city != null" >
+        city = #{record.city,jdbcType=VARCHAR},
+      </if>
+      <if test="record.birthday != null" >
+        birthday = #{record.birthday,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sex != null" >
+        sex = #{record.sex,jdbcType=INTEGER},
+      </if>
+      <if test="record.weixinid != null" >
+        weixinId = #{record.weixinid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.accountstate != null" >
+        accountState = #{record.accountstate,jdbcType=INTEGER},
+      </if>
+      <if test="record.qqid != null" >
+        qqId = #{record.qqid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.password != null" >
+        password = #{record.password,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update user
+    set id = #{record.id,jdbcType=BIGINT},
+      phone = #{record.phone,jdbcType=VARCHAR},
+      nickName = #{record.nickname,jdbcType=VARCHAR},
+      iconUrl = #{record.iconurl,jdbcType=VARCHAR},
+      city = #{record.city,jdbcType=VARCHAR},
+      birthday = #{record.birthday,jdbcType=VARCHAR},
+      sex = #{record.sex,jdbcType=INTEGER},
+      weixinId = #{record.weixinid,jdbcType=VARCHAR},
+      accountState = #{record.accountstate,jdbcType=INTEGER},
+      qqId = #{record.qqid,jdbcType=VARCHAR},
+      password = #{record.password,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.ideaout.dategirls.domain.User" >
+    update user
+    <set >
+      <if test="phone != null" >
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="nickname != null" >
+        nickName = #{nickname,jdbcType=VARCHAR},
+      </if>
+      <if test="iconurl != null" >
+        iconUrl = #{iconurl,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null" >
+        city = #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="birthday != null" >
+        birthday = #{birthday,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        sex = #{sex,jdbcType=INTEGER},
+      </if>
+      <if test="weixinid != null" >
+        weixinId = #{weixinid,jdbcType=VARCHAR},
+      </if>
+      <if test="accountstate != null" >
+        accountState = #{accountstate,jdbcType=INTEGER},
+      </if>
+      <if test="qqid != null" >
+        qqId = #{qqid,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        password = #{password,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.ideaout.dategirls.domain.User" >
+    update user
+    set phone = #{phone,jdbcType=VARCHAR},
+      nickName = #{nickname,jdbcType=VARCHAR},
+      iconUrl = #{iconurl,jdbcType=VARCHAR},
+      city = #{city,jdbcType=VARCHAR},
+      birthday = #{birthday,jdbcType=VARCHAR},
+      sex = #{sex,jdbcType=INTEGER},
+      weixinId = #{weixinid,jdbcType=VARCHAR},
+      accountState = #{accountstate,jdbcType=INTEGER},
+      qqId = #{qqid,jdbcType=VARCHAR},
+      password = #{password,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>
